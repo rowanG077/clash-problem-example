@@ -1,0 +1,67 @@
+fpgas/**/*.log 
+fpgas/**/*.jou 
+fpgas/**/*.cache 
+fpgas/**/*.gen 
+fpgas/**/*.hbs 
+fpgas/**/*.hw 
+fpgas/**/*.ip_user_files 
+fpgas/**/*.runs 
+fpgas/**/*.xpr 
+fpgas/**/*.html 
+fpgas/**/*.xml 
+fpgas/**/*.sim 
+fpgas/**/*.srcs 
+fpgas/**/*.str 
+fpgas/**/.Xil 
+fpgas/**/defines.v
+fpgas/**/create_project.tcl 
+fpgas/**/update_config.tcl 
+fpgas/**/run_synth.tcl 
+fpgas/**/run_impl.tcl 
+fpgas/**/generate_bit.tcl
+fpgas/**/*.bit 
+fpgas/**/*.ltx 
+fpgas/**/program.tcl 
+fpgas/**/generate_mcs.tcl 
+fpgas/**/*.mcs 
+fpgas/**/*.prm 
+fpgas/**/flash.tcl
+fpgas/**/*_utilization.rpt 
+fpgas/**/*_utilization_hierarchical.rpt
+fpgas/**/rev/
+fpgas/**/tb/**/cmds.f
+fpgas/**/tb/**/sim.vvp
+fpgas/**/tb/**/results.xml
+
+**/sim_build/
+**/__pycache__/
+
+# kernel module
+fpgas/common/driver/example/*.cmd
+fpgas/common/driver/example/*.ko
+fpgas/common/driver/example/*.mod
+fpgas/common/driver/example/*.mod.c
+fpgas/common/driver/example/*.o
+fpgas/common/driver/example/Module.symvers
+fpgas/common/driver/example/modules.order
+
+# test results/test-generated verilog/vvp
+*_results.xml
+**/tb/**/*.v
+**/tb/**/*.vvp
+**/tb/**/*.lxt
+!**/tb/**/test_*.v
+!**/tb/**/test_*.vvp
+
+# clash
+**/clash/**/*.dyn_hi
+**/clash/**/*.dyn_o
+**/clash/**/*.hi
+**/clash/**/*.o
+**/*topEntity/*
+
+# for nix
+**/result
+
+# cabal
+**/dist-newstyle

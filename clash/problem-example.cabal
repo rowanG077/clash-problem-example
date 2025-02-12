@@ -1,0 +1,74 @@
+cabal-version:          3.6
+name:                   problem-example
+version:                0.1.0.0
+build-type:             Simple
+
+common shared-settings
+    default-language:   GHC2021
+    default-extensions: BinaryLiterals
+                        , ConstraintKinds
+                        , DataKinds
+                        , DeriveAnyClass
+                        , DeriveGeneric
+                        , DeriveLift
+                        , DerivingStrategies
+                        , ExplicitForAll
+                        , ExplicitNamespaces
+                        , FlexibleContexts
+                        , FlexibleInstances
+                        , KindSignatures
+                        , MagicHash
+                        , MonoLocalBinds
+                        , NumericUnderscores
+                        , NoImplicitPrelude
+                        , NoStarIsType
+                        , NoStrictData
+                        , NoStrict
+                        , QuasiQuotes
+                        , ScopedTypeVariables
+                        , TemplateHaskellQuotes
+                        , TemplateHaskell
+                        , TypeApplications
+                        , TypeFamilies
+                        , TypeOperators
+    ghc-options:        -fconstraint-solver-iterations=100 
+                        -fplugin=GHC.TypeLits.KnownNat.Solver 
+                        -fplugin=GHC.TypeLits.Extra.Solver 
+                        -fplugin=GHC.TypeLits.Normalise
+
+library
+    import:             shared-settings
+    hs-source-dirs:     lib
+    exposed-modules:    Top
+    build-depends:      base >= 4.7 && < 5
+                        , data-default
+                        , ghc-typelits-natnormalise
+                        , ghc-typelits-extra
+                        , ghc-typelits-knownnat
+                        , clash-ghc
+                        , clash-prelude
+                        , clash-protocols
+
+test-suite test
+    import:             shared-settings
+    other-modules:      TestFuncs
+                        , Top
+    type: 		          exitcode-stdio-1.0
+    hs-source-dirs:     lib
+                        , test
+    main-is:    	      Tests.hs
+    build-depends:      HUnit
+                        , base
+                        , data-default
+                        , ghc-typelits-natnormalise
+                        , ghc-typelits-extra
+                        , ghc-typelits-knownnat
+                        , hspec
+                        , hspec-contrib
+                        , QuickCheck
+                        , fmt
+                        , optparse-applicative
+                        , template-haskell
+                        , clash-prelude
+                        , clash-protocols
+
