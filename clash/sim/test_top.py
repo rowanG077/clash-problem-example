@@ -94,7 +94,7 @@ def to_axis(test_pkt, data_width):
     if len(chunks[-1]) < data_width:
         chunks[-1] = chunks[-1].ljust(data_width, (False, 0))  # Pad with \x00
     return chunks
-    
+
 async def run_test(dut, payload_lengths=None, payload_data=None, idle_inserter=None, backpressure_inserter=None):
 
     tb = TB(dut)
@@ -176,7 +176,8 @@ if cocotb.SIM_NAME:
 # cocotb-test
 
 sim_dir = os.path.abspath(os.path.dirname(__file__))
-clash_lib_dir = os.path.abspath(os.path.join(sim_dir, '..', 'lib'))
+project_base_dir = os.path.join(sim_dir, '..')
+clash_verilog_dir = os.path.abspath(os.path.join(project_base_dir, "verilog"))
 
 def test_eth_axis_rx(request):
     clash_src = "Top"
@@ -185,16 +186,17 @@ def test_eth_axis_rx(request):
     toplevel = dut
 
     verilog_sources = [
-        os.path.join(clash_lib_dir, "verilog", f"{clash_src}.topEntity", f"{dut}.v"),
+        os.path.join(project_base_dir, "verilog", f"{clash_src}.topEntity", f"{dut}.v"),
     ]
 
     # sim_build = os.path.join(tests_dir, "sim_build",
     #     request.node.name.replace('[', '-').replace(']', ''))
 
-    subprocess.run(
-        ["clash", "--verilog", f"{clash_src}.hs"],
-        cwd=clash_lib_dir,
-    )
+    # subprocess.run(
+    #     ["cabal", "run", "clash", "--", f"lib/{clash_src}.hs", "--verilog"],
+    #     cwd=project_base_dir,
+    #     check=True
+    # )
 
     cocotb_test.simulator.run(
         python_search=[sim_dir],

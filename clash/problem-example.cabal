@@ -31,9 +31,9 @@ common shared-settings
                         , TypeApplications
                         , TypeFamilies
                         , TypeOperators
-    ghc-options:        -fconstraint-solver-iterations=100 
-                        -fplugin=GHC.TypeLits.KnownNat.Solver 
-                        -fplugin=GHC.TypeLits.Extra.Solver 
+    ghc-options:        -fconstraint-solver-iterations=100
+                        -fplugin=GHC.TypeLits.KnownNat.Solver
+                        -fplugin=GHC.TypeLits.Extra.Solver
                         -fplugin=GHC.TypeLits.Normalise
 
 library
@@ -72,3 +72,9 @@ test-suite test
                         , clash-prelude
                         , clash-protocols
 
+
+-- Builds the executable 'clash', with simple-nix project in scope
+executable clash
+  main-is: bin/Clash.hs
+  default-language: Haskell2010
+  Build-Depends: base, clash-ghc, problem-example

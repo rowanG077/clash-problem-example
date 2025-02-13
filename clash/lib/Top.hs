@@ -9,97 +9,96 @@ import Data.Proxy (Proxy (..))
 import qualified Protocols.Df as Df
 import qualified Protocols.DfConv as DfConv
 import Protocols
-import Protocols.Axi4.Stream 
+import Protocols.Axi4.Stream
 
-{-# ANN topEntity 
+import qualified Data.Maybe as Maybe
+
+{-# ANN topEntity
   (Synthesize
     { t_name   = "top"
     , t_inputs =
       [ PortName "clk"
       , PortName "rst"
       , PortProduct ""
-        [ PortProduct "rx"
-          [ PortName "tvalid"
-          , PortProduct ""
-            [ PortName "tdata"
-            , PortName "tkeep"
-            , PortName "tstrb"
-            , PortName "tlast"
-            , PortName "tid"
-            , PortName "tdest"
-            , PortName "tuser"
-            ]
-          ]
+        [ PortName "rx_tvalid"
         , PortName "tx_tready"
         ]
       ]
     , t_output =
       PortProduct ""
         [ PortName "rx_tready"
-        , PortProduct "tx"
-          [ PortName "tvalid"
-          , PortProduct ""
-            [ PortName "tdata"
-            , PortName "tkeep"
-            , PortName "tstrb"
-            , PortName "tlast"
-            , PortName "tid"
-            , PortName "tdest"
-            , PortName "tuser"]
-          ]
+        , PortName "tx_tvalid"
         ]
       }) #-}
 
-type AxiDataWidth = 64
+type AxiDataWidth = 8
 type AxisConfig = 'Axi4StreamConfig (AxiDataWidth `Div` 8) 0 0
 
 type AxiSTopEntity dom cfg =
-  Clock dom 
-  -> Reset dom 
-  -> (Signal dom (Maybe (Axi4StreamM2S cfg Bool)), Signal dom Axi4StreamS2M) 
+  Clock dom
+  -> Reset dom
+  -> (Signal dom (Maybe (Axi4StreamM2S cfg Bool)), Signal dom Axi4StreamS2M)
   -> (Signal dom Axi4StreamS2M, Signal dom (Maybe (Axi4StreamM2S cfg Bool)))
 
-topEntity :: AxiSTopEntity System AxisConfig
-topEntity clk rst = withClockResetEnable clk rst enableGen $ toSignals ethAxisCircuit
+-- topEntity :: AxiSTopEntity System AxisConfig
+topEntity clk rst = withClockResetEnable clk rst enableGen $ toSignals (ethAxisCircuit @System @())
 
-ethAxisCircuit 
-  :: forall dom cfg. _
+myCompander ::
+  forall dom i o s.
+  (HiddenClockResetEnable dom, NFDataX s) =>
+  s ->
+  -- | Return `True` when you're finished with the current input value
+  -- and are ready for the next one.
+  -- Return `Just` to send the produced value off to the right.
+  (s -> i -> (s, Maybe o, Bool)) ->
+  Circuit (Df.Df dom i) (Df.Df dom o)
+myCompander s0 f = Circuit (unbundle . go . bundle)
+ where
+  go :: Signal dom (Df.Data i, Ack) -> Signal dom (Ack, Df.Data o)
+  go = mealy f' s0
+  f' :: s -> (Df.Data i, Ack) -> (s, (Ack, Df.Data o))
+  f' s (Df.NoData, _) = (s, (Ack False, Df.NoData))
+  f' s (Df.Data i, Ack ack) = (s'', (Ack ackBack, maybe Df.NoData Df.Data o))
+   where
+    (s', o, doneWithInput) = f s i
+    -- We only care about the downstream ack if we're sending them something
+    mustWaitForAck = Maybe.isJust o
+    (s'', ackBack) = if mustWaitForAck && not ack then (s, False) else (s', doneWithInput)
+
+ethAxisCircuit
+  :: forall dom a. _
   => Circuit
-      (Axi4Stream dom cfg Bool)
-      (Axi4Stream dom cfg Bool)
-ethAxisCircuit = 
+      (Df dom a)
+      (Df dom a)
+ethAxisCircuit =
   let
-    proxy = Proxy @(Axi4Stream dom cfg Bool)
-    fromDf = DfConv.dfToDfConvInp proxy
-    toDf = DfConv.dfToDfConvOtp proxy
-    asAxi = fromAxi |> axiPassthrough |> toAxi 
+    asAxi = axiPassthrough
   in
     asAxi
 
 axiPassthrough
-    :: forall dom cfg. _
+    :: forall dom a. _
     => Circuit
-      (Df dom (Axi4StreamM2S cfg Bool))
-      (Df dom (Axi4StreamM2S cfg Bool))
-axiPassthrough = Df.compander () (\() raw -> ((), Just raw, True))
+      (Df dom a)
+      (Df dom a)
+axiPassthrough = Df.compander () (\_ raw -> ((), Just raw, True))
 
-fromAxi 
-  :: Circuit 
-    (Axi4Stream dom cfg Bool) 
+fromAxi
+  :: Circuit
+    (Axi4Stream dom cfg Bool)
     (Df dom (Axi4StreamM2S cfg Bool))
-fromAxi = 
+fromAxi =
   let
     go (Nothing, _) = (Axi4StreamS2M { _tready = False }, Df.NoData)
     go (Just axiM2S, Ack ack) = (Axi4StreamS2M { _tready = ack }, Df.Data axiM2S)
   in Circuit (unbundle . fmap go . bundle)
 
-toAxi 
-  :: Circuit 
+toAxi
+  :: Circuit
     (Df dom (Axi4StreamM2S cfg Bool))
-    (Axi4Stream dom cfg Bool) 
-toAxi = 
+    (Axi4Stream dom cfg Bool)
+toAxi =
   let
     go (Df.NoData, _) = (Ack False, Nothing)
     go (Df.Data m2s, s2m) = (Ack $ _tready s2m, Just m2s)
   in Circuit (unbundle . fmap go . bundle)
-
